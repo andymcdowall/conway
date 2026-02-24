@@ -1,5 +1,5 @@
 /**
- * Configuration for Conway's Game of Life Guessing Game
+ * Configuration for Conway's Game of Life Guessing Game.
  */
 
 const GAME_CONFIG = {
