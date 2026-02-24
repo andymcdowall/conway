@@ -18,7 +18,7 @@ const GAME_CONFIG = {
   PLAYBACK_SPEED: 10,
 
   // Total number of rounds per game
-  TOTAL_ROUNDS: 1,
+  TOTAL_ROUNDS: 10,
 
   // Delay before moving to next round after reveal (milliseconds)
   NEXT_ROUND_DELAY: 2500,
