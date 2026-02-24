@@ -161,13 +161,19 @@ class ConwayGuessingGame {
 
     this.probabilityText.textContent = `Gen ${generation}: ${percentage}% of random worlds reach this far`;
 
-    // Color based on probability
-    if (probability > 0.5) {
-      this.probabilityText.style.color = '#00ff00';
-    } else if (probability > 0.2) {
-      this.probabilityText.style.color = '#ffbb00';
+    // Dynamic color thresholds based on total rounds
+    // Yellow threshold: 1/totalRounds (e.g., 20% for 5 rounds, 10% for 10 rounds)
+    // Orange threshold: half of yellow threshold
+    const yellowThreshold = 1 / this.totalRounds;
+    const orangeThreshold = yellowThreshold / 2;
+
+    // Color based on probability relative to game size
+    if (probability >= yellowThreshold) {
+      this.probabilityText.style.color = '#00ff00'; // Green - normal
+    } else if (probability >= orangeThreshold) {
+      this.probabilityText.style.color = '#ffbb00'; // Yellow - slightly out of distribution
     } else {
-      this.probabilityText.style.color = '#ff6600';
+      this.probabilityText.style.color = '#ff6600'; // Orange - very out of distribution
     }
   }
 
@@ -194,12 +200,15 @@ class ConwayGuessingGame {
 
     // Update UI
     this.roundCounter.textContent = `Round ${this.currentRound}/${this.totalRounds}`;
-    this.revealPanel.classList.remove('show');
+    this.revealTitle.textContent = '';
+    this.revealStats.innerHTML = '';
     this.btnNextRound.style.display = 'none';
     this.btnIntelligent.disabled = false;
     this.btnRandom.disabled = false;
     this.guessButtons.style.display = 'flex';
-    this.probabilityDisplay.style.display = 'none';
+    this.probabilityText.textContent = '';
+    this.probabilityDisplay.style.display = 'block';
+    this.revealPanel.style.display = 'block';
 
     // Generate initial state
     if (this.currentRoundData.isPrechosen) {
@@ -238,8 +247,7 @@ class ConwayGuessingGame {
     let generation = 0;
     let checkInterval;
 
-    // Show probability display
-    this.probabilityDisplay.style.display = 'block';
+    // Initialize probability display
     this.updateProbabilityDisplay(0);
 
     this.game.start();
@@ -300,7 +308,6 @@ class ConwayGuessingGame {
     statsHTML += `<div><strong>Total Generations:</strong> ${generation}</div>`;
 
     this.revealStats.innerHTML = statsHTML;
-    this.revealPanel.classList.add('show');
 
     // Show next round button
     this.btnNextRound.style.display = 'inline-block';
@@ -309,7 +316,12 @@ class ConwayGuessingGame {
   showFinalScore() {
     // Hide game UI
     this.guessButtons.style.display = 'none';
-    this.revealPanel.classList.remove('show');
+    this.revealTitle.textContent = '';
+    this.revealStats.innerHTML = '';
+    this.btnNextRound.style.display = 'none';
+    this.probabilityText.textContent = '';
+    this.probabilityDisplay.style.display = 'none';
+    this.revealPanel.style.display = 'none';
 
     // Calculate stats
     const percentage = Math.round((this.correctGuesses / this.totalRounds) * 100);

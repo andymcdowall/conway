@@ -1,2 +1,3 @@
 - **Demo 4: Import**: Grid size does not fit to whatever is imported
 - inlined prechosen states. Eventually, want more flexibility
+- There is a better way, in the game, to make the results looks good weighted

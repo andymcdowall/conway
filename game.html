@@ -29,9 +29,35 @@
     }
 
     .game-container {
-      max-width: 800px;
+      max-width: 1200px;
       margin: 0 auto;
       font-family: monospace;
+    }
+
+    .game-layout {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      margin-top: 24px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .game-left {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .game-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
     }
 
     .round-info {
@@ -56,20 +82,21 @@
 
     .guess-buttons {
       display: flex;
-      justify-content: center;
-      gap: 24px;
-      margin-bottom: 24px;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
     }
 
     .guess-btn {
-      padding: 16px 32px;
-      font-size: 18px;
+      padding: 12px 24px;
+      font-size: 16px;
       font-family: monospace;
       background: #0d0d0d;
       color: #00ff00;
       border: 2px solid #00bb00;
       cursor: pointer;
       transition: all 0.2s;
+      width: 100%;
     }
 
     .guess-btn:hover:not(:disabled) {
@@ -84,22 +111,17 @@
     }
 
     .reveal-panel {
-      text-align: center;
-      margin: 24px 0;
-      padding: 24px;
+      text-align: left;
+      padding: 16px;
       background: #1a1a1a;
       border: 2px solid #00bb00;
       border-radius: 4px;
-      display: none;
-    }
-
-    .reveal-panel.show {
-      display: block;
+      min-height: 150px;
     }
 
     .reveal-title {
-      font-size: 24px;
-      margin-bottom: 16px;
+      font-size: 20px;
+      margin-bottom: 12px;
       color: #00ff00;
     }
 
@@ -112,9 +134,9 @@
     }
 
     .reveal-stats {
-      font-size: 14px;
+      font-size: 13px;
       color: #888;
-      line-height: 1.8;
+      line-height: 1.6;
     }
 
     .reveal-stats strong {
@@ -202,30 +224,38 @@
       <span id="score-text">Score: 0/0</span>
     </div>
 
-    <div class="game-board">
-      <div class="conway-container" id="game-container"></div>
-    </div>
+    <div class="game-layout">
+      <!-- Left: Game Board and Controls -->
+      <div class="game-left">
+        <div class="game-board">
+          <div class="conway-container" id="game-container"></div>
+        </div>
 
-    <div id="probability-display" style="display: none; text-align: center; margin: 16px 0; font-family: monospace; font-size: 14px; color: #00bb00;">
-      <span id="probability-text"></span>
-    </div>
+        <div class="guess-buttons" id="guess-buttons">
+          <button class="guess-btn" id="btn-intelligent">Intelligent Design</button>
+          <button class="guess-btn" id="btn-random">Random</button>
+        </div>
+      </div>
 
-    <div class="guess-buttons" id="guess-buttons">
-      <button class="guess-btn" id="btn-intelligent">Intelligent Design</button>
-      <button class="guess-btn" id="btn-random">Random</button>
-    </div>
+      <!-- Right: Results -->
+      <div class="game-right">
+        <div id="probability-display" style="text-align: left; padding: 12px; font-family: monospace; font-size: 13px; color: #00bb00; background: #1a1a1a; border: 2px solid #333; border-radius: 4px; min-height: 45px;">
+          <span id="probability-text"></span>
+        </div>
 
-    <div class="reveal-panel" id="reveal-panel">
-      <div class="reveal-title" id="reveal-title"></div>
-      <div class="reveal-stats" id="reveal-stats"></div>
-      <button class="guess-btn" id="btn-next-round" style="margin-top: 24px; display: none;">Next Round</button>
-    </div>
+        <div class="reveal-panel" id="reveal-panel">
+          <div class="reveal-title" id="reveal-title"></div>
+          <div class="reveal-stats" id="reveal-stats"></div>
+          <button class="guess-btn" id="btn-next-round" style="margin-top: 24px; display: none;">Next Round</button>
+        </div>
 
-    <div class="final-score-panel" id="final-score-panel">
-      <div class="final-score-title">Game Complete!</div>
-      <div class="final-score-value" id="final-score-value"></div>
-      <div class="final-score-message" id="final-score-message"></div>
-      <button class="play-again-btn" id="play-again-btn">Play Again</button>
+        <div class="final-score-panel" id="final-score-panel">
+          <div class="final-score-title">Game Complete!</div>
+          <div class="final-score-value" id="final-score-value"></div>
+          <div class="final-score-message" id="final-score-message"></div>
+          <button class="play-again-btn" id="play-again-btn">Play Again</button>
+        </div>
+      </div>
     </div>
   </div>
 
