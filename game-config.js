@@ -26,13 +26,14 @@ const GAME_CONFIG = {
   // Initial density for random patterns (0.0 to 1.0)
   RANDOM_DENSITY: 0.3,
 
-  // Prechosen patterns (array of 2D grids)
-  // For now, using empty grids as placeholders
-  // Later, replace with actual interesting patterns
-  PRECHOSEN_PATTERNS: [
-    // Empty pattern (all cells dead) - placeholder
-    null
-  ]
+  // Gamma distribution parameters for generation probability
+  // Based on empirical data: likelihood that random world reaches generation N
+  GAMMA_SHAPE: 1.3,    // k (shape parameter)
+  GAMMA_SCALE: 620,    // θ (scale parameter)
+
+  // Path to JSON file containing prechosen patterns
+  // File should be in the format exported from simulation analysis
+  PRECHOSEN_PATTERNS_FILE: 'conway-stable-min4000gen-2026-02-24T19-49-54.json'
 };
 
 // Export for use in modules or direct script inclusion

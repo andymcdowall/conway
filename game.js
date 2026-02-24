@@ -10,6 +10,8 @@ class ConwayGuessingGame {
     this.correctGuesses = 0;
     this.rounds = [];
     this.currentRoundData = null;
+    this.prechosenPatterns = [];
+    this.patternsLoaded = false;
 
     // DOM elements
     this.gameContainer = document.getElementById('game-container');
@@ -18,6 +20,8 @@ class ConwayGuessingGame {
     this.guessButtons = document.getElementById('guess-buttons');
     this.btnIntelligent = document.getElementById('btn-intelligent');
     this.btnRandom = document.getElementById('btn-random');
+    this.probabilityDisplay = document.getElementById('probability-display');
+    this.probabilityText = document.getElementById('probability-text');
     this.revealPanel = document.getElementById('reveal-panel');
     this.revealTitle = document.getElementById('reveal-title');
     this.revealStats = document.getElementById('reveal-stats');
@@ -44,9 +48,127 @@ class ConwayGuessingGame {
     this.btnNextRound.addEventListener('click', () => this.startRound());
     this.playAgainBtn.addEventListener('click', () => this.resetGame());
 
-    // Initialize game
+    // Initialize game - load patterns then start
+    this.initialize();
+  }
+
+  initialize() {
+    // Load patterns from inlined JavaScript
+    this.loadPrechosenPatterns();
     this.generateRounds();
     this.startRound();
+  }
+
+  loadPrechosenPatterns() {
+    // Use patterns from prechosen-patterns.js (loaded globally)
+    if (typeof PRECHOSEN_PATTERNS !== 'undefined' && Array.isArray(PRECHOSEN_PATTERNS)) {
+      this.prechosenPatterns = PRECHOSEN_PATTERNS;
+      this.patternsLoaded = true;
+      console.log(`Loaded ${this.prechosenPatterns.length} prechosen patterns`);
+    } else {
+      console.error('PRECHOSEN_PATTERNS not found or invalid');
+      this.prechosenPatterns = [];
+      this.patternsLoaded = false;
+    }
+  }
+
+  /**
+   * Calculate gamma function using Lanczos approximation
+   * More accurate than Stirling for our range
+   */
+  gammaFunction(z) {
+    // Lanczos coefficients for g=7
+    const g = 7;
+    const coef = [
+      0.99999999999980993,
+      676.5203681218851,
+      -1259.1392167224028,
+      771.32342877765313,
+      -176.61502916214059,
+      12.507343278686905,
+      -0.13857109526572012,
+      9.9843695780195716e-6,
+      1.5056327351493116e-7
+    ];
+
+    if (z < 0.5) {
+      // Use reflection formula: Γ(z) * Γ(1-z) = π / sin(πz)
+      return Math.PI / (Math.sin(Math.PI * z) * this.gammaFunction(1 - z));
+    }
+
+    z -= 1;
+    let x = coef[0];
+    for (let i = 1; i < g + 2; i++) {
+      x += coef[i] / (z + i);
+    }
+
+    const t = z + g + 0.5;
+    return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+  }
+
+  /**
+   * Calculate lower incomplete gamma function γ(s, x)
+   * Using series expansion
+   */
+  lowerIncompleteGamma(s, x) {
+    if (x <= 0) return 0;
+    if (x > 1e5) return this.gammaFunction(s); // Approximation for large x
+
+    // Series expansion
+    let sum = 0;
+    let term = 1 / s;
+    sum += term;
+
+    for (let n = 1; n < 100; n++) {
+      term *= x / (s + n);
+      sum += term;
+      if (Math.abs(term) < 1e-10) break;
+    }
+
+    return Math.pow(x, s) * Math.exp(-x) * sum;
+  }
+
+  /**
+   * Calculate survival probability: P(X >= generation)
+   * For gamma distribution with given shape and scale
+   */
+  calculateSurvivalProbability(generation) {
+    const k = GAME_CONFIG.GAMMA_SHAPE;
+    const theta = GAME_CONFIG.GAMMA_SCALE;
+
+    if (generation <= 0) return 1.0;
+
+    // Standardize: x' = generation / theta
+    const x = generation / theta;
+
+    // CDF = γ(k, x) / Γ(k)
+    const gamma_k = this.gammaFunction(k);
+    const lower_incomplete = this.lowerIncompleteGamma(k, x);
+    const cdf = lower_incomplete / gamma_k;
+
+    // Survival function = 1 - CDF
+    const survival = 1 - cdf;
+
+    return Math.max(0, Math.min(1, survival)); // Clamp to [0, 1]
+  }
+
+  /**
+   * Update probability display with current generation
+   */
+  updateProbabilityDisplay(generation) {
+    const probability = this.calculateSurvivalProbability(generation);
+    const percentage = (probability * 100).toFixed(1);
+
+    this.probabilityText.textContent = `Gen ${generation}: ${percentage}% of random worlds reach this far`;
+
+    // Color based on probability
+    if (probability > 0.5) {
+      this.probabilityText.style.color = '#00ff00';
+    } else if (probability > 0.2) {
+      this.probabilityText.style.color = '#ffbb00';
+    } else {
+      this.probabilityText.style.color = '#ff6600';
+    }
   }
 
   generateRounds() {
@@ -77,11 +199,20 @@ class ConwayGuessingGame {
     this.btnIntelligent.disabled = false;
     this.btnRandom.disabled = false;
     this.guessButtons.style.display = 'flex';
+    this.probabilityDisplay.style.display = 'none';
 
     // Generate initial state
     if (this.currentRoundData.isPrechosen) {
-      // For now, use empty grid as placeholder for "intelligent design"
-      this.game.clear();
+      // Select random pattern from loaded prechosen patterns
+      if (this.prechosenPatterns.length > 0) {
+        const randomIndex = Math.floor(Math.random() * this.prechosenPatterns.length);
+        const selectedPattern = this.prechosenPatterns[randomIndex];
+        this.currentRoundData.patternId = selectedPattern.id;
+        this.game.setGrid(selectedPattern.initialGrid);
+      } else {
+        // Fallback to empty grid if no patterns loaded
+        this.game.clear();
+      }
     } else {
       // Random initial state
       this.game.randomize(GAME_CONFIG.RANDOM_DENSITY);
@@ -107,10 +238,17 @@ class ConwayGuessingGame {
     let generation = 0;
     let checkInterval;
 
+    // Show probability display
+    this.probabilityDisplay.style.display = 'block';
+    this.updateProbabilityDisplay(0);
+
     this.game.start();
 
     checkInterval = setInterval(() => {
       generation = this.game.generation;
+
+      // Update probability display
+      this.updateProbabilityDisplay(generation);
 
       // Check if stable
       if (this.game.isStable) {
@@ -214,9 +352,8 @@ class ConwayGuessingGame {
     // Reset score display
     this.scoreText.textContent = 'Score: 0/0';
 
-    // Generate new rounds and start
-    this.generateRounds();
-    this.startRound();
+    // Reinitialize
+    this.initialize();
   }
 }
 

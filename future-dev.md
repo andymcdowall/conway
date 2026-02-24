@@ -1,1 +1,2 @@
 - **Demo 4: Import**: Grid size does not fit to whatever is imported
+- inlined prechosen states. Eventually, want more flexibility
