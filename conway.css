@@ -1,0 +1,183 @@
+/**
+ * Conway's Game of Life - Styling
+ */
+
+/* Container for each game instance */
+.conway-container {
+  display: inline-block;
+  margin: 20px;
+  padding: 20px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Canvas styling (applied inline, but can be overridden) */
+canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Control panel */
+.conway-controls {
+  margin-top: 15px;
+  padding: 15px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons */
+.conway-btn {
+  padding: 8px 16px;
+  background: #2a2a2a;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.conway-btn:hover {
+  background: #00ff00;
+  color: #000;
+}
+
+.conway-btn:active {
+  transform: scale(0.95);
+}
+
+.conway-btn.play-pause {
+  min-width: 70px;
+}
+
+/* Speed control */
+.conway-speed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.conway-label {
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conway-slider {
+  width: 120px;
+  height: 6px;
+  background: #2a2a2a;
+  outline: none;
+  border-radius: 3px;
+  -webkit-appearance: none;
+}
+
+.conway-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #00ff00;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.conway-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #00ff00;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+
+.conway-speed-value {
+  color: #888;
+  font-family: monospace;
+  font-size: 12px;
+  min-width: 50px;
+}
+
+/* Generation counter */
+.conway-generation {
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #0a0a0a;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+/* Stability indicator */
+.conway-stability {
+  color: #888;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #0a0a0a;
+  border-radius: 4px;
+  border: 1px solid #333;
+  transition: all 0.3s;
+}
+
+.conway-stability.stable {
+  color: #ffaa00;
+  border-color: #ffaa00;
+  background: #1a0f00;
+  font-weight: bold;
+}
+
+/* Page styling */
+body {
+  background: #000;
+  color: #0f0;
+  font-family: monospace;
+  margin: 0;
+  padding: 20px;
+}
+
+h1, h2, h3 {
+  color: #00ff00;
+  text-align: center;
+  font-family: monospace;
+}
+
+.demo-section {
+  margin: 40px 0;
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0a0a0a;
+}
+
+.demo-section h2 {
+  margin-top: 0;
+  color: #00cc00;
+}
+
+.demo-description {
+  text-align: center;
+  color: #888;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Multi-instance layout */
+.multi-game-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
