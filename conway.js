@@ -20,7 +20,8 @@ class ConwayGame {
       detectStability: options.detectStability !== false,
       stopWhenStable: options.stopWhenStable || false,
       maxHistorySize: options.maxHistorySize || 20,
-      onStable: options.onStable || null
+      onStable: options.onStable || null,
+      headless: options.headless || false // Headless mode skips all rendering
     };
 
     // State
@@ -38,7 +39,9 @@ class ConwayGame {
     this.previousGrid = null; // For quick period-1 detection
 
     // Setup
-    this.setupCanvas();
+    if (!this.config.headless) {
+      this.setupCanvas();
+    }
     this.initialize();
 
     if (this.config.autoStart) {
@@ -103,6 +106,40 @@ class ConwayGame {
         this.grid[y][x] = 1;
       }
     });
+  }
+
+  setGrid(gridData) {
+    // gridData: 2D array representing the full grid state
+    const sourceHeight = gridData.length;
+    const sourceWidth = gridData[0]?.length || 0;
+
+    // Clear current grid
+    for (let y = 0; y < this.config.height; y++) {
+      for (let x = 0; x < this.config.width; x++) {
+        this.grid[y][x] = 0;
+      }
+    }
+
+    // Center the pattern if dimensions don't match
+    const offsetY = Math.floor((this.config.height - sourceHeight) / 2);
+    const offsetX = Math.floor((this.config.width - sourceWidth) / 2);
+
+    // Copy grid data with bounds checking
+    for (let y = 0; y < sourceHeight; y++) {
+      for (let x = 0; x < sourceWidth; x++) {
+        const targetY = y + offsetY;
+        const targetX = x + offsetX;
+        if (targetY >= 0 && targetY < this.config.height &&
+            targetX >= 0 && targetX < this.config.width) {
+          this.grid[targetY][targetX] = gridData[y][x];
+        }
+      }
+    }
+
+    // Reset stability tracking and generation counter
+    this.clearStabilityTracking();
+    this.generation = 0;
+    this.render();
   }
 
   hashGrid(grid = this.grid) {
@@ -217,6 +254,9 @@ class ConwayGame {
   }
 
   render() {
+    // Skip rendering in headless mode
+    if (this.config.headless) return;
+
     // Clear canvas
     this.ctx.fillStyle = this.config.backgroundColor;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);

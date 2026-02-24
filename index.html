@@ -8,6 +8,10 @@
 </head>
 <body>
   <h1>Conway's Game of Life - Modular Simulator</h1>
+  <div style="margin-bottom: 16px;">
+    <a href="game.html" style="color: #00ff00; font-family: monospace; font-size: 14px; margin-right: 16px;">→ Guessing Game</a>
+    <a href="analysis.html" style="color: #00ff00; font-family: monospace; font-size: 14px;">→ Simulation Analysis</a>
+  </div>
 
   <!-- Demo 1: Game with controls -->
   <div class="demo-section">
@@ -34,6 +38,44 @@
     </div>
   </div>
 
+  <!-- Demo 4: Import and run patterns from JSON -->
+  <div class="demo-section">
+    <h2>Demo 4: Import Patterns from JSON</h2>
+    <p class="demo-description">Load and run patterns exported from the simulation analysis page.</p>
+
+    <div style="margin-bottom: 16px;">
+      <label style="color: #00ff00; font-family: monospace; font-size: 14px;">
+        Load JSON file:
+        <input type="file" id="json-file-input" accept=".json" style="margin-left: 10px;">
+      </label>
+    </div>
+
+    <div id="json-metadata" style="display: none; margin-bottom: 16px; font-family: monospace; font-size: 12px; color: #00bb00;">
+      <div><strong>File loaded:</strong> <span id="json-filename"></span></div>
+      <div><strong>Total patterns:</strong> <span id="json-count"></span></div>
+      <div><strong>Filter type:</strong> <span id="json-filter-type"></span></div>
+      <div><strong>Grid size:</strong> <span id="json-grid-size"></span></div>
+    </div>
+
+    <div id="pattern-selector-container" style="display: none; margin-bottom: 16px;">
+      <label style="color: #00ff00; font-family: monospace; font-size: 14px;">
+        Select pattern:
+        <select id="pattern-selector" style="margin-left: 10px; background: #0d0d0d; color: #00ff00; border: 1px solid #00bb00; padding: 4px; font-family: monospace;"></select>
+      </label>
+      <button id="load-pattern-btn" style="margin-left: 10px; background: #0d0d0d; color: #00ff00; border: 1px solid #00bb00; padding: 4px 12px; font-family: monospace; cursor: pointer;">Load Pattern</button>
+    </div>
+
+    <div id="pattern-info" style="display: none; margin-bottom: 16px; font-family: monospace; font-size: 12px; color: #888;">
+      <div><strong>Pattern ID:</strong> <span id="pattern-id"></span></div>
+      <div><strong>Status:</strong> <span id="pattern-status"></span></div>
+      <div><strong>Period:</strong> <span id="pattern-period"></span></div>
+      <div><strong>Generations to stability:</strong> <span id="pattern-gen-to-stability"></span></div>
+    </div>
+
+    <div class="conway-container" id="game-import-container"></div>
+    <div id="controls-import-container"></div>
+  </div>
+
   <!-- Load scripts -->
   <script src="conway.js"></script>
   <script src="controls.js"></script>
@@ -42,8 +84,8 @@
     // Demo 1: Game with full controls
     const game1Container = document.getElementById('game1-container');
     const game1 = new ConwayGame(game1Container, {
-      width: 80,
-      height: 60,
+      width: 50,
+      height: 50,
       cellSize: 6,
       updateInterval: 100,
       autoStart: false,
@@ -67,8 +109,8 @@
     // Demo 2: Auto-running game without controls
     const game2Container = document.getElementById('game2-container');
     const game2 = new ConwayGame(game2Container, {
-      width: 80,
-      height: 60,
+      width: 50,
+      height: 50,
       cellSize: 6,
       updateInterval: 80,
       autoStart: true,
@@ -78,8 +120,8 @@
     // Demo 3: Multiple small instances
     const game3Container = document.getElementById('game3-container');
     const game3 = new ConwayGame(game3Container, {
-      width: 60,
-      height: 60,
+      width: 50,
+      height: 50,
       cellSize: 5,
       updateInterval: 120,
       autoStart: true,
@@ -88,8 +130,8 @@
 
     const game4Container = document.getElementById('game4-container');
     const game4 = new ConwayGame(game4Container, {
-      width: 60,
-      height: 60,
+      width: 50,
+      height: 50,
       cellSize: 5,
       updateInterval: 90,
       autoStart: true,
@@ -108,6 +150,116 @@
     ]);
     game3.start();
     */
+
+    // Demo 4: Import and run patterns
+    const gameImportContainer = document.getElementById('game-import-container');
+    const gameImport = new ConwayGame(gameImportContainer, {
+      width: 50,
+      height: 50,
+      cellSize: 6,
+      updateInterval: 100,
+      autoStart: false,
+      cellColor: '#00ff00'
+    });
+
+    const controlsImportContainer = document.getElementById('controls-import-container');
+    const controlsImport = new ConwayControls(gameImport, controlsImportContainer, {
+      showPlayPause: true,
+      showStep: true,
+      showReset: true,
+      showRandomize: false,
+      showSpeed: true,
+      showGeneration: true,
+      showStability: true,
+      minSpeed: 10,
+      maxSpeed: 500,
+      defaultSpeed: 100
+    });
+
+    // JSON import logic
+    let loadedData = null;
+    const jsonFileInput = document.getElementById('json-file-input');
+    const jsonMetadata = document.getElementById('json-metadata');
+    const jsonFilename = document.getElementById('json-filename');
+    const jsonCount = document.getElementById('json-count');
+    const jsonFilterType = document.getElementById('json-filter-type');
+    const jsonGridSize = document.getElementById('json-grid-size');
+    const patternSelectorContainer = document.getElementById('pattern-selector-container');
+    const patternSelector = document.getElementById('pattern-selector');
+    const loadPatternBtn = document.getElementById('load-pattern-btn');
+    const patternInfo = document.getElementById('pattern-info');
+    const patternId = document.getElementById('pattern-id');
+    const patternStatus = document.getElementById('pattern-status');
+    const patternPeriod = document.getElementById('pattern-period');
+    const patternGenToStability = document.getElementById('pattern-gen-to-stability');
+
+    jsonFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          loadedData = JSON.parse(event.target.result);
+
+          // Validate structure
+          if (!loadedData.metadata || !loadedData.simulations) {
+            alert('Invalid JSON format. Expected export from simulation analysis.');
+            return;
+          }
+
+          // Display metadata
+          jsonFilename.textContent = file.name;
+          jsonCount.textContent = loadedData.simulations.length;
+          jsonFilterType.textContent = loadedData.metadata.filter?.type || 'unknown';
+          const gridSize = loadedData.metadata.config;
+          jsonGridSize.textContent = `${gridSize.gridWidth} × ${gridSize.gridHeight}`;
+          jsonMetadata.style.display = 'block';
+
+          // Populate pattern selector
+          patternSelector.innerHTML = '';
+          loadedData.simulations.forEach((sim, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            const status = sim.isStable ? 'Stable' : 'Unstable';
+            const genText = sim.generationsToStability !== null ? `${sim.generationsToStability} gen` : 'N/A';
+            option.textContent = `#${sim.id} - ${status} - Period ${sim.period} - ${genText}`;
+            patternSelector.appendChild(option);
+          });
+
+          patternSelectorContainer.style.display = 'block';
+          patternInfo.style.display = 'none';
+        } catch (err) {
+          alert('Error parsing JSON file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    loadPatternBtn.addEventListener('click', () => {
+      if (!loadedData) return;
+
+      const selectedIndex = parseInt(patternSelector.value);
+      const simulation = loadedData.simulations[selectedIndex];
+
+      if (!simulation || !simulation.initialGrid) {
+        alert('Invalid pattern data');
+        return;
+      }
+
+      // Load the grid into the game
+      gameImport.setGrid(simulation.initialGrid);
+
+      // Display pattern info
+      patternId.textContent = simulation.id;
+      patternStatus.textContent = simulation.isStable ? 'Stable' : 'Unstable';
+      patternPeriod.textContent = simulation.period || 'N/A';
+      patternGenToStability.textContent = simulation.generationsToStability !== null ? simulation.generationsToStability : 'N/A';
+      patternInfo.style.display = 'block';
+
+      // Stop if running
+      gameImport.stop();
+    });
   </script>
 </body>
 </html>

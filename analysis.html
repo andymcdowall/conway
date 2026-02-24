@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conway's Game of Life - Simulation Analysis</title>
+  <link rel="stylesheet" href="analysis.css">
+</head>
+<body>
+
+  <header>
+    <h1>Conway Simulation Analysis</h1>
+    <a href="index.html">← Back to Demo</a>
+  </header>
+
+  <div class="main-layout">
+
+    <!-- Sidebar: Controls -->
+    <aside class="sidebar">
+
+      <div>
+        <h2>Simulation Config</h2>
+        <div class="form-section">
+          <div class="form-group">
+            <label for="num-simulations">Number of simulations</label>
+            <input type="number" id="num-simulations" value="1000" min="1" max="100000">
+          </div>
+          <div class="form-group">
+            <label for="grid-width">Grid width</label>
+            <input type="number" id="grid-width" value="50" min="10" max="200">
+          </div>
+          <div class="form-group">
+            <label for="grid-height">Grid height</label>
+            <input type="number" id="grid-height" value="50" min="10" max="200">
+          </div>
+          <div class="form-group">
+            <label for="max-period" title="Maximum oscillator period to detect. Patterns with longer periods are classified as unstable.">Max period detection</label>
+            <input type="number" id="max-period" value="20" min="5" max="100" title="Maximum oscillator period to detect. Patterns with longer periods are classified as unstable.">
+          </div>
+          <div class="form-group">
+            <label for="max-generations" title="Maximum generations to simulate. Patterns that don't stabilize within this limit are classified as unstable.">Max generations (timeout)</label>
+            <input type="number" id="max-generations" value="500" min="10" max="10000" title="Maximum generations to simulate. Patterns that don't stabilize within this limit are classified as unstable.">
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="progress-section">
+        <h2>Progress</h2>
+        <div class="progress-label">
+          <span>Completed</span>
+          <span id="progress-text">0 / 0</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="progress-status" id="progress-status">Ready</div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="button-group">
+        <button class="btn btn-primary" id="btn-start">Run Simulations</button>
+        <button class="btn btn-danger" id="btn-stop" disabled>Stop</button>
+      </div>
+
+      <hr class="divider">
+
+      <div>
+        <h2>Export</h2>
+        <div class="download-section">
+          <div class="form-group">
+            <label>Pattern type</label>
+            <div>
+              <label style="display: inline-block; margin-right: 15px;">
+                <input type="radio" name="export-type" value="stable" checked>
+                Stable
+              </label>
+              <label style="display: inline-block;">
+                <input type="radio" name="export-type" value="unstable">
+                Unstable
+              </label>
+            </div>
+          </div>
+          <div class="download-row" id="min-gen-row">
+            <label for="min-generations">Min generations ≥</label>
+            <input type="number" id="min-generations" value="100" min="0">
+          </div>
+          <div class="download-count" id="download-count">0 patterns match</div>
+          <button class="btn btn-secondary" id="btn-download" disabled>Download JSON</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main content: Stats + Histogram -->
+    <main class="content">
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Run</div>
+          <div class="stat-value muted" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stable</div>
+          <div class="stat-value muted" id="stat-stable">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unstable</div>
+          <div class="stat-value muted" id="stat-unstable">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Min Gen</div>
+          <div class="stat-value muted" id="stat-min">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Max Gen</div>
+          <div class="stat-value muted" id="stat-max">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Mean Gen</div>
+          <div class="stat-value muted" id="stat-mean">—</div>
+        </div>
+      </div>
+
+      <div class="histogram-area">
+        <div class="histogram-header">
+          <h2>Distribution</h2>
+          <div class="histogram-options">
+            <span id="histogram-info">Run simulations to see results</span>
+          </div>
+        </div>
+        <canvas id="histogram-canvas"></canvas>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="conway.js"></script>
+  <script src="simulation.js"></script>
+  <script src="histogram.js"></script>
+  <script>
+    // Elements
+    const numSimulationsInput = document.getElementById('num-simulations');
+    const gridWidthInput = document.getElementById('grid-width');
+    const gridHeightInput = document.getElementById('grid-height');
+    const maxPeriodInput = document.getElementById('max-period');
+    const maxGenerationsInput = document.getElementById('max-generations');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const btnDownload = document.getElementById('btn-download');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressStatus = document.getElementById('progress-status');
+    const downloadCount = document.getElementById('download-count');
+    const minGenerationsInput = document.getElementById('min-generations');
+    const minGenRow = document.getElementById('min-gen-row');
+    const exportTypeRadios = document.getElementsByName('export-type');
+    const histogramInfo = document.getElementById('histogram-info');
+
+    // Stat elements
+    const statTotal = document.getElementById('stat-total');
+    const statStable = document.getElementById('stat-stable');
+    const statUnstable = document.getElementById('stat-unstable');
+    const statMin = document.getElementById('stat-min');
+    const statMax = document.getElementById('stat-max');
+    const statMean = document.getElementById('stat-mean');
+
+    // Setup histogram canvas
+    const histCanvas = document.getElementById('histogram-canvas');
+    let histogram = null;
+    let runner = null;
+
+    function initHistogram() {
+      const rect = histCanvas.parentElement.getBoundingClientRect();
+      histCanvas.width = histCanvas.offsetWidth || rect.width - 40;
+      histCanvas.height = histCanvas.offsetHeight || rect.height - 60;
+      histogram = new Histogram(histCanvas, {
+        barColor: '#00bb00',
+        barHoverColor: '#00ff00',
+        backgroundColor: '#0d0d0d',
+        gridColor: '#1e1e1e',
+        textColor: '#00bb00',
+        axisColor: '#00bb00'
+      });
+      histogram.render();
+    }
+
+    // Resize canvas when window resizes
+    window.addEventListener('resize', () => {
+      histCanvas.width = histCanvas.offsetWidth;
+      histCanvas.height = histCanvas.offsetHeight;
+      if (histogram) histogram.render();
+    });
+
+    // Initialize after layout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        histCanvas.width = histCanvas.offsetWidth;
+        histCanvas.height = histCanvas.offsetHeight;
+        initHistogram();
+      });
+    });
+
+    function setRunning(running) {
+      btnStart.disabled = running;
+      btnStop.disabled = !running;
+      numSimulationsInput.disabled = running;
+      gridWidthInput.disabled = running;
+      gridHeightInput.disabled = running;
+      maxPeriodInput.disabled = running;
+      maxGenerationsInput.disabled = running;
+    }
+
+    function updateStats(stats) {
+      statTotal.textContent = stats.total.toLocaleString();
+      statTotal.classList.remove('muted');
+      statStable.textContent = stats.stable.toLocaleString();
+      statStable.classList.remove('muted');
+      statUnstable.textContent = stats.unstable.toLocaleString();
+      statUnstable.classList.remove('muted');
+      statMin.textContent = stats.min !== null ? stats.min : '—';
+      statMin.classList.toggle('muted', stats.min === null);
+      statMax.textContent = stats.max !== null ? stats.max : '—';
+      statMax.classList.toggle('muted', stats.max === null);
+      statMean.textContent = stats.mean !== null ? stats.mean : '—';
+      statMean.classList.toggle('muted', stats.mean === null);
+    }
+
+    function getSelectedExportType() {
+      for (const radio of exportTypeRadios) {
+        if (radio.checked) return radio.value;
+      }
+      return 'stable';
+    }
+
+    function updateDownloadCount() {
+      if (!runner) return;
+      const exportType = getSelectedExportType();
+
+      if (exportType === 'stable') {
+        const minGen = parseInt(minGenerationsInput.value) || 0;
+        const filtered = runner.getFilteredResults(minGen);
+        downloadCount.textContent = `${filtered.length.toLocaleString()} patterns match`;
+        minGenRow.style.display = '';
+      } else {
+        const unstable = runner.getUnstableResults();
+        downloadCount.textContent = `${unstable.length.toLocaleString()} patterns match`;
+        minGenRow.style.display = 'none';
+      }
+    }
+
+    minGenerationsInput.addEventListener('input', updateDownloadCount);
+    exportTypeRadios.forEach(radio => {
+      radio.addEventListener('change', updateDownloadCount);
+    });
+
+    // Start simulation
+    btnStart.addEventListener('click', () => {
+      const numSims = parseInt(numSimulationsInput.value) || 1000;
+      const gridW = parseInt(gridWidthInput.value) || 50;
+      const gridH = parseInt(gridHeightInput.value) || 50;
+      const maxPeriod = parseInt(maxPeriodInput.value) || 20;
+      const maxGen = parseInt(maxGenerationsInput.value) || 500;
+
+      // Reset display
+      progressBar.style.width = '0%';
+      progressText.textContent = `0 / ${numSims.toLocaleString()}`;
+      progressStatus.textContent = 'Running...';
+      histogramInfo.textContent = 'Simulating...';
+      btnDownload.disabled = true;
+      downloadCount.textContent = '0 patterns match';
+
+      [statTotal, statStable, statUnstable, statMin, statMax, statMean].forEach(el => {
+        el.textContent = '—';
+        el.classList.add('muted');
+      });
+
+      if (histogram) histogram.clear();
+
+      setRunning(true);
+
+      runner = new SimulationRunner({
+        numSimulations: numSims,
+        gridWidth: gridW,
+        gridHeight: gridH,
+        maxGenerations: maxGen,
+        maxHistorySize: maxPeriod,
+
+        onProgress: (completed, total) => {
+          const pct = (completed / total) * 100;
+          progressBar.style.width = `${pct.toFixed(1)}%`;
+          progressText.textContent = `${completed.toLocaleString()} / ${total.toLocaleString()}`;
+          histogram.setData(runner.getResults());
+          updateStats(runner.getStatistics());
+        },
+
+        onComplete: (results) => {
+          setRunning(false);
+          progressStatus.textContent = `Done — ${results.length.toLocaleString()} simulations complete`;
+          histogram.setData(results);
+          const stats = runner.getStatistics();
+          updateStats(stats);
+          updateDownloadCount();
+          btnDownload.disabled = false;
+          const maxPeriodValue = parseInt(maxPeriodInput.value) || 20;
+          const maxGenValue = parseInt(maxGenerationsInput.value) || 500;
+          histogramInfo.textContent = `${stats.stable.toLocaleString()} stable (period ≤${maxPeriodValue}, within ${maxGenValue} gen) / ${stats.unstable.toLocaleString()} unstable`;
+        }
+      });
+
+      runner.runAll();
+    });
+
+    // Stop simulation
+    btnStop.addEventListener('click', () => {
+      if (runner) {
+        runner.cancel();
+        setRunning(false);
+        progressStatus.textContent = 'Stopped';
+        if (runner.results.length > 0) {
+          histogram.setData(runner.getResults());
+          updateStats(runner.getStatistics());
+          updateDownloadCount();
+          btnDownload.disabled = false;
+        }
+      }
+    });
+
+    // Download JSON
+    btnDownload.addEventListener('click', () => {
+      if (!runner) return;
+      const exportType = getSelectedExportType();
+      const minGen = parseInt(minGenerationsInput.value) || 0;
+      const json = runner.exportToJSON(exportType, minGen);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      if (exportType === 'stable') {
+        a.download = `conway-stable-min${minGen}gen-${timestamp}.json`;
+      } else {
+        a.download = `conway-unstable-${timestamp}.json`;
+      }
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

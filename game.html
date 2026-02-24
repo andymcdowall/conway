@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conway's Game of Life - Guessing Game</title>
+  <link rel="stylesheet" href="conway.css">
+  <style>
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .game-links {
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .game-links a {
+      color: #00ff00;
+      margin-left: 16px;
+      text-decoration: none;
+    }
+
+    .game-links a:hover {
+      color: #00bb00;
+    }
+
+    .game-container {
+      max-width: 800px;
+      margin: 0 auto;
+      font-family: monospace;
+    }
+
+    .round-info {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: #00ff00;
+    }
+
+    .score-display {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 16px;
+      color: #00bb00;
+    }
+
+    .game-board {
+      margin: 0 auto 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .guess-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .guess-btn {
+      padding: 16px 32px;
+      font-size: 18px;
+      font-family: monospace;
+      background: #0d0d0d;
+      color: #00ff00;
+      border: 2px solid #00bb00;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .guess-btn:hover:not(:disabled) {
+      background: #00bb00;
+      color: #0d0d0d;
+      border-color: #00ff00;
+    }
+
+    .guess-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .reveal-panel {
+      text-align: center;
+      margin: 24px 0;
+      padding: 24px;
+      background: #1a1a1a;
+      border: 2px solid #00bb00;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .reveal-panel.show {
+      display: block;
+    }
+
+    .reveal-title {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: #00ff00;
+    }
+
+    .reveal-title.correct {
+      color: #00ff00;
+    }
+
+    .reveal-title.incorrect {
+      color: #ff6600;
+    }
+
+    .reveal-stats {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.8;
+    }
+
+    .reveal-stats strong {
+      color: #00bb00;
+    }
+
+    .final-score-panel {
+      text-align: center;
+      margin: 48px 0;
+      padding: 48px;
+      background: #1a1a1a;
+      border: 2px solid #00ff00;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .final-score-panel.show {
+      display: block;
+    }
+
+    .final-score-title {
+      font-size: 32px;
+      margin-bottom: 24px;
+      color: #00ff00;
+    }
+
+    .final-score-value {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #00ff00;
+    }
+
+    .final-score-message {
+      font-size: 18px;
+      margin-bottom: 32px;
+      color: #00bb00;
+    }
+
+    .play-again-btn {
+      padding: 16px 48px;
+      font-size: 18px;
+      font-family: monospace;
+      background: #0d0d0d;
+      color: #00ff00;
+      border: 2px solid #00bb00;
+      cursor: pointer;
+    }
+
+    .play-again-btn:hover {
+      background: #00bb00;
+      color: #0d0d0d;
+    }
+
+    .instructions {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #888;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-header">
+    <h1>Conway's Game of Life - Guessing Game</h1>
+    <div class="game-links">
+      <a href="index.html">← Demos</a>
+      <a href="analysis.html">Simulation Analysis</a>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <div class="instructions">
+      <strong>How to Play:</strong> Look at each initial state and guess whether it was intelligently designed or randomly generated.
+      After you guess, watch the simulation play out and see if you were correct!
+    </div>
+
+    <div class="round-info">
+      <span id="round-counter"></span>
+    </div>
+
+    <div class="score-display">
+      <span id="score-text">Score: 0/0</span>
+    </div>
+
+    <div class="game-board">
+      <div class="conway-container" id="game-container"></div>
+    </div>
+
+    <div class="guess-buttons" id="guess-buttons">
+      <button class="guess-btn" id="btn-intelligent">Intelligent Design</button>
+      <button class="guess-btn" id="btn-random">Random</button>
+    </div>
+
+    <div class="reveal-panel" id="reveal-panel">
+      <div class="reveal-title" id="reveal-title"></div>
+      <div class="reveal-stats" id="reveal-stats"></div>
+      <button class="guess-btn" id="btn-next-round" style="margin-top: 24px; display: none;">Next Round</button>
+    </div>
+
+    <div class="final-score-panel" id="final-score-panel">
+      <div class="final-score-title">Game Complete!</div>
+      <div class="final-score-value" id="final-score-value"></div>
+      <div class="final-score-message" id="final-score-message"></div>
+      <button class="play-again-btn" id="play-again-btn">Play Again</button>
+    </div>
+  </div>
+
+  <script src="conway.js"></script>
+  <script src="game-config.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
